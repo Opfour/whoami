@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Install
+        run: pnpm install
+        working-directory: cli
+
+      - name: Build
+        run: pnpm build
+        working-directory: cli
+
+      - name: Bundle
+        run: pnpm bundle
+        working-directory: cli
+
+      - name: Verify bundle
+        run: node dist/wai.cjs --version
+        working-directory: cli
+
+      - name: Create tarball
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p "wai-v${VERSION}/bin"
+          cp cli/dist/wai.cjs "wai-v${VERSION}/bin/wai"
+          tar -czf "wai-v${VERSION}.tar.gz" "wai-v${VERSION}"
+          shasum -a 256 "wai-v${VERSION}.tar.gz" > "wai-v${VERSION}.tar.gz.sha256"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            wai-v*.tar.gz
+            wai-v*.tar.gz.sha256
+          generate_release_notes: true
