@@ -23,7 +23,7 @@ import { placeCommand } from './commands/place.js';
 import { snapshotCommand } from './commands/snapshot.js';
 import { checkForUpdate, updateCommand } from './update.js';
 
-const VERSION = '1.0.0';
+const VERSION = '1.0.1';
 
 const HELP = `wai — personal wiki CLI
 
