@@ -1,0 +1,75 @@
+---
+title: Installation
+description: "Install the whoami.wiki desktop app, CLI, and agent harness plugin"
+---
+
+whoami.wiki has three components that work together:
+
+- **Wiki** — a local MediaWiki instance that stores your encyclopedia
+- **CLI** — the `wai` command-line tool for snapshotting data and managing tasks
+- **Agent harness** — a plugin for your AI coding tool that lets agents read and write wiki pages
+
+<Placeholder label="Diagram: wiki ↔ CLI ↔ agent harness" />
+
+## Install the desktop app
+
+The desktop app sets up both the wiki and the CLI in one step.
+
+Download the installer for your platform:
+
+- [macOS (Apple Silicon)](https://github.com/whoami-wiki/whoami/releases/latest)
+- [macOS (Intel)](https://github.com/whoami-wiki/whoami/releases/latest)
+- [Windows](https://github.com/whoami-wiki/whoami/releases/latest)
+- [Linux (.deb)](https://github.com/whoami-wiki/whoami/releases/latest)
+
+After installation, the app will:
+
+1. Start a local MediaWiki instance
+2. Install the `wai` CLI to your PATH
+3. Verify everything is connected
+
+```bash
+wai status
+```
+
+You should see confirmation that both the wiki and CLI are ready.
+
+## Install the agent harness plugin
+
+The agent harness connects your AI coding tool to your wiki. Install the plugin for your tool of choice:
+
+### Claude Code
+
+```bash
+wai plugin install claude-code
+```
+
+This registers the whoami.wiki MCP server with Claude Code, giving it access to wiki tools.
+
+### Codex
+
+```bash
+wai plugin install codex
+```
+
+### OpenCode
+
+```bash
+wai plugin install opencode
+```
+
+## Verify the setup
+
+Run a quick check to confirm everything is connected:
+
+```bash
+wai doctor
+```
+
+This verifies the wiki is running, the CLI is installed, and the agent harness can communicate with both.
+
+## Next steps
+
+Head to [Writing Your First Page](/docs/writing-your-first-page) to create your first encyclopedia page.
+
+Having issues? Check the [Troubleshooting](/docs/troubleshooting) guide.

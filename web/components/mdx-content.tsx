@@ -1,7 +1,10 @@
 import { MDXRemote, MDXRemoteProps } from "next-mdx-remote/rsc";
-import Link from "next/link";
+import remarkGfm from "remark-gfm";
 import { ReactNode } from "react";
 import { slugify } from "@/lib/blog";
+import { MarkdownBlocks } from "@/components/markdown-blocks";
+import { Features } from "@/components/features";
+import { ScoreTable } from "@/components/score-table";
 
 function textContent(children: ReactNode): string {
   if (typeof children === "string") return children;
@@ -15,13 +18,14 @@ function textContent(children: ReactNode): string {
 }
 
 const mdxComponents = {
+  ...MarkdownBlocks,
   h1: ({ children }: { children?: ReactNode }) => (
     <h1 className="text-3xl font-medium font-sans">{children}</h1>
   ),
   h2: ({ children }: { children?: ReactNode }) => (
     <h2
       id={slugify(textContent(children))}
-      className="text-2xl font-medium font-sans mt-8 mb-4 scroll-mt-24"
+      className="text-2xl font-medium font-sans scroll-mt-24"
     >
       {children}
     </h2>
@@ -29,7 +33,7 @@ const mdxComponents = {
   h3: ({ children }: { children?: ReactNode }) => (
     <h3
       id={slugify(textContent(children))}
-      className="text-xl font-medium text-primary font-sans mt-6 mb-3 scroll-mt-24"
+      className="text-xl font-medium text-primary font-sans scroll-mt-24"
     >
       {children}
     </h3>
@@ -48,24 +52,10 @@ const mdxComponents = {
   li: ({ children }: { children?: ReactNode }) => (
     <li className="leading-7 text-base">{children}</li>
   ),
-  code: ({ children }: { children?: ReactNode }) => (
-    <code className="text-sm font-mono p-0.5 px-1 border border-neutral-300 dark:border-neutral-600 rounded-md text-primary">
-      {children}
-    </code>
-  ),
   pre: ({ children }: { children?: ReactNode }) => (
     <pre className="text-sm font-mono p-4 border border-neutral-300 dark:border-neutral-600 rounded-md overflow-x-auto mb-4 bg-neutral-50 dark:bg-neutral-800">
       {children}
     </pre>
-  ),
-  a: ({ children, href = "" }: { children?: ReactNode; href?: string }) => (
-    <Link
-      href={href}
-      className="text-neutral-900 dark:text-neutral-100 hover:text-blue-600 hover:dark:text-blue-400 hover:underline font-normal underline underline-offset-4"
-      target={href.startsWith("http") ? "_blank" : undefined}
-    >
-      {children}
-    </Link>
   ),
   blockquote: ({ children }: { children?: ReactNode }) => (
     <blockquote className="border-l-2 border-neutral-300 dark:border-neutral-600 pl-4 italic text-muted mb-4">
@@ -78,6 +68,8 @@ const mdxComponents = {
       {content}
     </div>
   ),
+  Features,
+  ScoreTable,
   ThemedImage: ({
     light,
     dark,
@@ -94,11 +86,20 @@ const mdxComponents = {
   ),
 };
 
-export function MDXContent({ source }: { source: string }) {
+export function MDXContent({
+  source,
+  components,
+}: {
+  source: string;
+  components?: Record<string, React.ComponentType<any>>;
+}) {
   return (
     <MDXRemote
       source={source}
-      components={mdxComponents as MDXRemoteProps["components"]}
+      options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }}
+      components={
+        { ...mdxComponents, ...components } as MDXRemoteProps["components"]
+      }
     />
   );
 }
