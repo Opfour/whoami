@@ -42,8 +42,13 @@ exports.default = async function notarize(context) {
     });
 
     const { id } = submission.data;
-    const { bucket, object, accessKeyId, secretAccessKey, sessionToken } =
-      submission.data.attributes;
+    const {
+      bucket,
+      object,
+      awsAccessKeyId: accessKeyId,
+      awsSecretAccessKey: secretAccessKey,
+      awsSessionToken: sessionToken,
+    } = submission.data.attributes;
 
     console.log(`  • notarization submitted  id=${id}`);
 
