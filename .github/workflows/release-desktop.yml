@@ -37,6 +37,10 @@ jobs:
         run: bash scripts/bundle-lua.sh
         working-directory: desktop
 
+      - name: Bundle ffmpeg
+        run: bash scripts/bundle-ffmpeg.sh
+        working-directory: desktop
+
       - name: Import signing certificate
         env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
@@ -56,7 +60,10 @@ jobs:
           security list-keychains -d user -s $KEYCHAIN_PATH login.keychain-db
 
       - name: Build
-        run: pnpm dist -- --arm64 --x64
+        run: |
+          sudo launchctl limit maxfiles 65536 200000
+          ulimit -n 65536
+          pnpm dist -- --arm64 --x64
         working-directory: desktop
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
