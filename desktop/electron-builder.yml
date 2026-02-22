@@ -8,6 +8,7 @@ directories:
 files:
   - dist/**/*
   - renderer/**/*
+  - assets/**/*
   - "!src/**/*"
   - "!scripts/**/*"
   - "!.build/**/*"
