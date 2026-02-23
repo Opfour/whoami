@@ -1,13 +1,7 @@
-Snapshot reliability improvements and vault-based storage for backups.
-
-Features:
-- Include snapshot vault in export/import backups
-- Reorganise help text into Data and Backup sections
+Suppress a noisy Node.js deprecation warning.
 
 Fixes:
-- Verify object and snapshot writes land on disk, with clear error on failure
-- Warn on unreadable files during snapshot instead of silently skipping
+- Silence DEP0169 (url.parse) deprecation warning emitted by proxy-from-env via axios
 
 Improvements:
-- Move snapshot storage from ~/Archive to /Application Support/whoami/vault
-- Upgrade tough-cookie to v5.1.0
+- Upgrade axios-cookiejar-support to v6 and http-cookie-agent to v7
