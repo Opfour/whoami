@@ -5,6 +5,7 @@ import { slugify } from "@/lib/blog";
 import { MarkdownBlocks } from "@/components/markdown-blocks";
 import { Features } from "@/components/features";
 import { ScoreTable } from "@/components/score-table";
+import { ArchOverview } from "@/components/arch-overview";
 
 function textContent(children: ReactNode): string {
   if (typeof children === "string") return children;
@@ -70,6 +71,7 @@ const mdxComponents = {
   ),
   Features,
   ScoreTable,
+  ArchOverview,
   ThemedImage: ({
     light,
     dark,
@@ -85,7 +87,9 @@ const mdxComponents = {
     </>
   ),
   SideBySide: ({ children }: { children?: ReactNode }) => (
-    <div className="w-screen relative left-1/2 -translate-x-1/2 md:w-[min(960px,90vw)] px-4 md:px-0 grid grid-cols-1 md:grid-cols-2 gap-4">{children}</div>
+    <div className="w-screen relative left-1/2 -translate-x-1/2 md:w-[min(960px,90vw)] px-4 md:px-0 grid grid-cols-1 md:grid-cols-2 gap-4">
+      {children}
+    </div>
   ),
   WideImage: ({
     light,
@@ -98,7 +102,11 @@ const mdxComponents = {
   }) => (
     <div className="w-screen relative left-1/2 -translate-x-1/2 md:w-[min(960px,90vw)] px-4 md:px-0">
       <img src={light} alt={alt} className="w-full rounded-xl dark:hidden" />
-      <img src={dark} alt={alt} className="hidden dark:block w-full rounded-xl" />
+      <img
+        src={dark}
+        alt={alt}
+        className="hidden dark:block w-full rounded-xl"
+      />
     </div>
   ),
 };
