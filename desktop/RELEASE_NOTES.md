@@ -1,9 +1,13 @@
-New app icon and tray icon with "w.w" branding.
+New templates, shared credentials, and quality-of-life improvements.
 
 Features:
-- New app icon for dock, DMG, and app bundle
-- New tray menu bar icon with proper macOS template image support
-- Show correct icon in dock during development instead of default Electron icon
+- Add custom Main Page with onboarding guide for new installs
+- Add Open and Closed status templates for talk pages
+- Share credentials with the CLI via `~/.whoami/credentials.json`
+- Auto-login to the wiki on launch using stored credentials
 
 Fixes:
-- Include assets directory in packaged app so tray icon loads in production
+- Support Cmd+R to reload the wiki view
+
+Improvements:
+- Remove bundled CLI installer (CLI is now installed separately via install script)
