@@ -1,7 +1,8 @@
-Suppress a noisy Node.js deprecation warning.
+Shared credentials and improved auth login.
+
+Features:
+- Share credentials with the desktop app via `~/.whoami/credentials.json`
 
 Fixes:
-- Silence DEP0169 (url.parse) deprecation warning emitted by proxy-from-env via axios
-
-Improvements:
-- Upgrade axios-cookiejar-support to v6 and http-cookie-agent to v7
+- Obfuscate password input during `wai auth login`
+- Skip interactive server prompt, default to `localhost:8080`
