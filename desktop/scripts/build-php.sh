@@ -14,9 +14,11 @@ ROOT="$SCRIPT_DIR/.."
 OUT="$ROOT/resources/php"
 
 STATIC=false
+TARGET_ARCH=""
 for arg in "$@"; do
   case "$arg" in
     --static) STATIC=true ;;
+    --arch=*) TARGET_ARCH="${arg#--arch=}" ;;
   esac
 done
 
@@ -40,34 +42,73 @@ if [ "$STATIC" = true ]; then
   # MediaWiki extensions + extensions that are default-on in normal PHP but
   # must be explicitly listed for static builds (filter, openssl, ctype, etc.)
   EXTENSIONS="sqlite3,pdo_sqlite,mbstring,xml,dom,simplexml,xmlwriter,xmlreader,gd,intl,curl,fileinfo,phar,filter,openssl,ctype,iconv,tokenizer,session,zlib"
-  ARCH="$(uname -m)"
+  HOST_ARCH="$(uname -m)"
 
-  # Map uname arch to static-php-cli naming
-  case "$ARCH" in
-    arm64) SPC_ARCH="aarch64" ;;
-    *)     SPC_ARCH="$ARCH" ;;
+  # Map host arch to static-php-cli naming (for downloading spc binary)
+  case "$HOST_ARCH" in
+    arm64) SPC_HOST_ARCH="aarch64" ;;
+    *)     SPC_HOST_ARCH="$HOST_ARCH" ;;
   esac
 
-  echo "==> Building static PHP for macOS ($ARCH) with extensions: $EXTENSIONS"
+  # Resolve target architecture
+  if [ -z "$TARGET_ARCH" ]; then
+    TARGET_ARCH="$HOST_ARCH"
+  fi
+  case "$TARGET_ARCH" in
+    x64|x86_64) SPC_TARGET_ARCH="x86_64" ;;
+    arm64)      SPC_TARGET_ARCH="aarch64" ;;
+    *)          SPC_TARGET_ARCH="$TARGET_ARCH" ;;
+  esac
+
+  CROSS_COMPILE=false
+  if [ "$SPC_HOST_ARCH" != "$SPC_TARGET_ARCH" ]; then
+    CROSS_COMPILE=true
+  fi
+
+  echo "==> Building static PHP for macOS ($SPC_TARGET_ARCH) with extensions: $EXTENSIONS"
 
   BUILD_DIR="$ROOT/.build/php-static"
   mkdir -p "$BUILD_DIR"
 
-  # Download spc (static-php-cli) binary
-  SPC="$BUILD_DIR/spc"
-  if [ ! -f "$SPC" ]; then
-    TARBALL="$BUILD_DIR/spc-macos-$SPC_ARCH.tar.gz"
-    echo "==> Downloading static-php-cli..."
+  # Download spc (static-php-cli) binary for host architecture
+  SPC_NATIVE="$BUILD_DIR/spc-$SPC_HOST_ARCH"
+  if [ ! -f "$SPC_NATIVE" ]; then
+    TARBALL="$BUILD_DIR/spc-macos-$SPC_HOST_ARCH.tar.gz"
+    echo "==> Downloading static-php-cli ($SPC_HOST_ARCH)..."
     curl -fSL -o "$TARBALL" \
-      "https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-macos-$SPC_ARCH.tar.gz"
+      "https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-macos-$SPC_HOST_ARCH.tar.gz"
     tar -xzf "$TARBALL" -C "$BUILD_DIR"
-    chmod +x "$SPC"
+    mv "$BUILD_DIR/spc" "$SPC_NATIVE"
+    chmod +x "$SPC_NATIVE"
     rm "$TARBALL"
   fi
 
-  # Ensure build dependencies are available (spc doctor checks and fixes them)
-  echo "==> Checking build dependencies..."
-  "$SPC" doctor --auto-fix
+  # For cross-compilation, download the target-arch spc binary.
+  # Running the x86_64 spc under Rosetta makes it download x86_64 prebuilt
+  # libs and compile PHP for x86_64.
+  if [ "$CROSS_COMPILE" = true ]; then
+    SPC="$BUILD_DIR/spc-$SPC_TARGET_ARCH"
+    if [ ! -f "$SPC" ]; then
+      TARBALL="$BUILD_DIR/spc-macos-$SPC_TARGET_ARCH.tar.gz"
+      echo "==> Downloading static-php-cli ($SPC_TARGET_ARCH) for cross-compilation..."
+      curl -fSL -o "$TARBALL" \
+        "https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-macos-$SPC_TARGET_ARCH.tar.gz"
+      tar -xzf "$TARBALL" -C "$BUILD_DIR"
+      mv "$BUILD_DIR/spc" "$SPC"
+      chmod +x "$SPC"
+      rm "$TARBALL"
+    fi
+    # Install brew dependencies natively first, then run doctor with the
+    # target-arch binary to download target-arch pkg-config
+    echo "==> Installing build dependencies (native)..."
+    "$SPC_NATIVE" doctor --auto-fix
+    echo "==> Setting up target-arch build tools ($SPC_TARGET_ARCH)..."
+    "$SPC" doctor --auto-fix
+  else
+    SPC="$SPC_NATIVE"
+    echo "==> Checking build dependencies..."
+    "$SPC" doctor --auto-fix
+  fi
 
   # Download PHP sources and extension dependencies
   echo "==> Downloading PHP 8.3 sources..."
@@ -82,7 +123,7 @@ if [ "$STATIC" = true ]; then
   chmod +x "$OUT/bin/php"
 
   echo "==> Static PHP ready at $OUT/bin/php"
-  "$OUT/bin/php" -v
+  file "$OUT/bin/php"
   exit 0
 fi
 

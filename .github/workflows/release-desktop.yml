@@ -9,6 +9,11 @@ permissions:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        include:
+          - arch: arm64
+          - arch: x64
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +31,7 @@ jobs:
         working-directory: desktop
 
       - name: Build PHP
-        run: bash scripts/build-php.sh --static
+        run: bash scripts/build-php.sh --static --arch=${{ matrix.arch }}
         working-directory: desktop
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -36,7 +41,7 @@ jobs:
         working-directory: desktop
 
       - name: Bundle Lua
-        run: bash scripts/bundle-lua.sh
+        run: bash scripts/bundle-lua.sh --arch=${{ matrix.arch }}
         working-directory: desktop
 
       - name: Bundle ffmpeg
@@ -65,18 +70,39 @@ jobs:
         run: |
           sudo launchctl limit maxfiles 65536 200000
           ulimit -n 65536
-          pnpm dist -- --arm64 --x64
+          pnpm build
+          pnpm exec electron-builder --${{ matrix.arch }}
         working-directory: desktop
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
 
-      - name: Publish release
-        run: gh release create "$GITHUB_REF_NAME" desktop/dist-electron/*.{dmg,zip} --title "$GITHUB_REF_NAME" --notes-file desktop/RELEASE_NOTES.md
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.arch }}
+          path: desktop/dist-electron/whoami-*
 
       - name: Clean up keychain
         if: always()
         run: security delete-keychain $RUNNER_TEMP/signing.keychain-db
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List artifacts
+        run: find artifacts -type f | sort
+
+      - name: Publish release
+        run: gh release create "$GITHUB_REF_NAME" $(find artifacts -name '*.dmg' -o -name '*.zip' | sort) --title "$GITHUB_REF_NAME" --notes-file desktop/RELEASE_NOTES.md --latest=false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

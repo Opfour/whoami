@@ -10,9 +10,16 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$SCRIPT_DIR/.."
 OUT="$ROOT/resources/lua"
 
+TARGET_ARCH=""
+for arg in "$@"; do
+  case "$arg" in
+    --arch=*) TARGET_ARCH="${arg#--arch=}" ;;
+  esac
+done
+
 if [ -f "$OUT/bin/lua" ]; then
   echo "Lua binary already exists at $OUT/bin/lua — skipping"
-  "$OUT/bin/lua" -v
+  "$OUT/bin/lua" -v 2>/dev/null || file "$OUT/bin/lua"
   exit 0
 fi
 
@@ -36,11 +43,24 @@ if [[ "$(uname)" == "Linux" ]]; then
   PLATFORM="linux"
 fi
 
-make "$PLATFORM" MYCFLAGS="-mmacosx-version-min=12.0"
+# Cross-compilation: build in src/ directly with -target in CC to ensure
+# both compilation and linking use the correct architecture. The macosx
+# make target uses nested makes that don't propagate LDFLAGS reliably.
+case "$TARGET_ARCH" in
+  x64|x86_64)
+    make -C src all \
+      CC="cc -target x86_64-apple-darwin" \
+      MYCFLAGS="-DLUA_USE_MACOSX -mmacosx-version-min=12.0" \
+      MYLDFLAGS="-mmacosx-version-min=12.0"
+    ;;
+  *)
+    make "$PLATFORM" MYCFLAGS="-mmacosx-version-min=12.0"
+    ;;
+esac
 
 mkdir -p "$OUT/bin"
 cp src/lua "$OUT/bin/lua"
 chmod +x "$OUT/bin/lua"
 
 echo "==> Lua $LUA_VERSION ready at $OUT/bin/lua"
-"$OUT/bin/lua" -v
+file "$OUT/bin/lua"
