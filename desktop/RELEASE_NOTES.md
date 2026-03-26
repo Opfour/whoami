@@ -1,4 +1,6 @@
-Fix incorrect GitHub issues link on the default main page.
+Validate the setup form before creating a new wiki.
 
 Fixes:
-- Correct the GitHub issues link in the desktop main page to point to the right repository
+- Show inline validation errors for empty name, username, or password fields
+- Require passwords to be at least 10 characters
+- Clear errors as the user types
